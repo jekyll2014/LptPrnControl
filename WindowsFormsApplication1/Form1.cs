@@ -302,7 +302,7 @@ namespace WindowsFormsApplication1
                                         {
                                             LptPort.Write(tmpBuffer, m, 1);
                                             progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             outStr = ">> ";
                                             if (checkBox_hexTerminal.Checked) outStr += Accessory.ConvertByteArrayToHex(tmpBuffer);
@@ -398,7 +398,7 @@ namespace WindowsFormsApplication1
                                             if (checkBox_hexTerminal.Checked) outStr += tmpBuffer[m];
                                             else outStr += Accessory.ConvertHexToString(tmpBuffer[m].ToString());
                                             outStr += "\r\n";
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             if (SendComing > 1) m = tmpBuffer.Length;
                                             SetText(outStr);
@@ -449,7 +449,7 @@ namespace WindowsFormsApplication1
                                             if (checkBox_hexTerminal.Checked) outStr += tmpBuffer.Substring(m, 3);
                                             else outStr += Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
                                             outStr += "\r\n";
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
                                             if (SendComing > 1) m = tmpBuffer.Length;
@@ -558,17 +558,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private void textBox_param_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (button_Send.Enabled)
-            {
-                if (e.KeyData == Keys.Return)
-                {
-                    button_Send_Click(textBox_command, EventArgs.Empty);
-                }
-            }
-        }
-
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             LptPrnControl.Properties.Settings.Default.checkBox_hexCommand = checkBox_hexCommand.Checked;
@@ -576,6 +565,8 @@ namespace WindowsFormsApplication1
             LptPrnControl.Properties.Settings.Default.checkBox_hexParam = checkBox_hexParam.Checked;
             LptPrnControl.Properties.Settings.Default.textBox_param = textBox_param.Text;
             LptPrnControl.Properties.Settings.Default.Save();
+            port.Dispose();
+            LptPort.Dispose();
         }
 
         private void radioButton_stream_CheckedChanged(object sender, EventArgs e)
