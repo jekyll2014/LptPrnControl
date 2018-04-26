@@ -109,7 +109,7 @@
             this.textBox_param.Name = "textBox_param";
             this.textBox_param.Size = new System.Drawing.Size(370, 20);
             this.textBox_param.TabIndex = 13;
-            this.textBox_param.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox_param_KeyUp);
+            this.textBox_param.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox_command_KeyUp);
             this.textBox_param.Leave += new System.EventHandler(this.textBox_param_Leave);
             // 
             // checkBox_hexParam
