@@ -302,7 +302,7 @@ namespace WindowsFormsApplication1
                                         {
                                             LptPort.Write(tmpBuffer, m, 1);
                                             progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             outStr = ">> ";
                                             if (checkBox_hexTerminal.Checked) outStr += Accessory.ConvertByteArrayToHex(tmpBuffer);
@@ -398,7 +398,7 @@ namespace WindowsFormsApplication1
                                             if (checkBox_hexTerminal.Checked) outStr += tmpBuffer[m];
                                             else outStr += Accessory.ConvertHexToString(tmpBuffer[m].ToString());
                                             outStr += "\r\n";
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             if (SendComing > 1) m = tmpBuffer.Length;
                                             SetText(outStr);
@@ -449,7 +449,7 @@ namespace WindowsFormsApplication1
                                             if (checkBox_hexTerminal.Checked) outStr += tmpBuffer.Substring(m, 3);
                                             else outStr += Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
                                             outStr += "\r\n";
-                                            await TaskEx.Delay(strDelay);
+                                            if (strDelay > 0) await TaskEx.Delay(strDelay);
                                             //ReadLPT();
                                             progressBar1.Value = (n * tmpBuffer.Length + m) * 100 / (repeat * tmpBuffer.Length);
                                             if (SendComing > 1) m = tmpBuffer.Length;
