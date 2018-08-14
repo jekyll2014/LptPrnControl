@@ -1,4 +1,4 @@
-﻿namespace WindowsFormsApplication1
+﻿namespace LptPrnControl
 {
     partial class Form1
     {
@@ -13,8 +13,9 @@
         /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
         protected override void Dispose(bool disposing)
         {
+            LptPort.Dispose();
             if (disposing && (components != null))
-            {
+            {                
                 components.Dispose();
             }
             base.Dispose(disposing);
@@ -177,7 +178,6 @@
             this.textBox_terminal.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.textBox_terminal.Size = new System.Drawing.Size(544, 69);
             this.textBox_terminal.TabIndex = 18;
-            this.textBox_terminal.DoubleClick += new System.EventHandler(this.textBox_terminal_DoubleClick);
             // 
             // textBox_command
             // 
@@ -404,7 +404,8 @@
             this.comboBox_portname1.Items.AddRange(new object[] {
             "LPT1",
             "LPT2",
-            "LPT3"});
+            "LPT3",
+            "LPT4"});
             this.comboBox_portname1.Location = new System.Drawing.Point(67, 8);
             this.comboBox_portname1.Name = "comboBox_portname1";
             this.comboBox_portname1.Size = new System.Drawing.Size(97, 21);
@@ -450,14 +451,14 @@
             // 
             this.checkBox_saveInput.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.checkBox_saveInput.AutoSize = true;
-            this.checkBox_saveInput.Checked = true;
-            this.checkBox_saveInput.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_saveInput.Enabled = false;
             this.checkBox_saveInput.Location = new System.Drawing.Point(221, 233);
             this.checkBox_saveInput.Name = "checkBox_saveInput";
             this.checkBox_saveInput.Size = new System.Drawing.Size(49, 17);
             this.checkBox_saveInput.TabIndex = 123;
             this.checkBox_saveInput.Text = "input";
             this.checkBox_saveInput.UseVisualStyleBackColor = true;
+            this.checkBox_saveInput.Visible = false;
             // 
             // Form1
             // 

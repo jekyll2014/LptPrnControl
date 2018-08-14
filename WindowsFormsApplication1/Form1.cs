@@ -1,12 +1,13 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
 using System.IO;
+using System.Management;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace WindowsFormsApplication1
+namespace LptPrnControl
 {
     public partial class Form1 : Form
     {
@@ -14,7 +15,7 @@ namespace WindowsFormsApplication1
         long oldTicks = DateTime.Now.Ticks, limitTick = 200;
         int LogLinesLimit = 100;
 
-        [DllImport("kernel32.dll", SetLastError = true)]
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         static extern SafeFileHandle CreateFile(string lpFileName, FileAccess dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, FileMode dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
         bool IsConnected = false;
         SafeFileHandle port;
@@ -27,6 +28,7 @@ namespace WindowsFormsApplication1
                 if (port.IsInvalid)
                 {
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
+                    IsConnected = false;
                     return IsConnected;
                 }
                 else
@@ -42,28 +44,6 @@ namespace WindowsFormsApplication1
             return IsConnected;
         }
 
-        public void ReadLPT()
-        {
-            /*if (IsConnected)
-            {
-                //if (LptPort.Length>0)
-                //{
-                //long buff_len=LptPort.Length;
-                byte[] buff = new byte[1];
-                //LptPort.Read(buff,0, (int)buff_len);
-                buff [0]= 0;
-                buff[0] = (byte)LptPort.ReadByte();
-                if (checkBox_saveTo.Checked)
-                {
-                    if (checkBox_hexTerminal.Checked) File.AppendAllText(textBox_saveTo.Text, Accessory.ConvertByteArrayToHex(buff, buff.Length), Encoding.GetEncoding(LptPrnControl.Properties.Settings.Default.CodePage));
-                    else File.AppendAllText(textBox_saveTo.Text, Encoding.GetEncoding(LptPrnControl.Properties.Settings.Default.CodePage).GetString(buff), Encoding.GetEncoding(LptPrnControl.Properties.Settings.Default.CodePage));
-                }
-                if (checkBox_hexTerminal.Checked) SetText("<< " + Accessory.ConvertByteArrayToHex(buff, buff.Length) + "\r\n");
-                else SetText("<< " + Encoding.GetEncoding(LptPrnControl.Properties.Settings.Default.CodePage).GetString(buff) + "\r\n");
-                //}
-            }*/
-        }
-
         public Form1()
         {
             InitializeComponent();
@@ -71,51 +51,37 @@ namespace WindowsFormsApplication1
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            port = CreateFile(textBox_saveTo.Text, FileAccess.ReadWrite, 0, IntPtr.Zero, FileMode.OpenOrCreate, 0, IntPtr.Zero);
+            LptPort = new FileStream(port, FileAccess.Read);
+            LptPort.Close();
+            port = null;
+
+            comboBox_portname1.Items.Clear();
+            try
+            {
+                ManagementObjectSearcher searcher = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM Win32_ParallelPort");
+                foreach (ManagementObject queryObj in searcher.Get())
+                {
+                    comboBox_portname1.Items.Add(queryObj["Name"]);
+                }
+            }
+            catch (ManagementException)
+            {
+                MessageBox.Show("An error occurred while querying for WMI data");
+            }
+
+            if (comboBox_portname1.Items.Count > 0) comboBox_portname1.SelectedIndex = 0;
+            else comboBox_portname1.Items.Add("No LPT ports found");
+
+
             checkBox_hexCommand.Checked = LptPrnControl.Properties.Settings.Default.checkBox_hexCommand;
             textBox_command.Text = LptPrnControl.Properties.Settings.Default.textBox_command;
             checkBox_hexParam.Checked = LptPrnControl.Properties.Settings.Default.checkBox_hexParam;
             textBox_param.Text = LptPrnControl.Properties.Settings.Default.textBox_param;
-            comboBox_portname1.SelectedIndex = 0;
             limitTick = LptPrnControl.Properties.Settings.Default.LineBreakTimeout;
             limitTick *= 10000;
             LogLinesLimit = LptPrnControl.Properties.Settings.Default.LogLinesLimit;
         }
-
-        /*private void serialPort1_DataReceived(object sender, System.IO.Ports.SerialDataReceivedEventArgs e)
-        {
-            byte[] rx = new byte[ComPrnControl.Properties.Settings.Default.rxBuffer];
-            int i = 0;
-            while (serialPort1.BytesToRead > 0)
-            {
-                try
-                {
-                    rx[i] = (byte)serialPort1.ReadByte();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error reading port " + serialPort1.PortName + ": " + ex.Message);
-                }
-                i++;
-            }
-            if (checkBox_saveTo.Checked)
-            {
-                if (checkBox_hexTerminal.Checked)
-                {
-                    File.AppendAllText(textBox_saveTo.Text, ConvertByteArrToHex(rx, i), Encoding.GetEncoding(ComPrnControl.Properties.Settings.Default.CodePage));
-                }
-                else
-                {
-                    using (var stream = new FileStream(textBox_saveTo.Text, FileMode.Append))
-                    {
-                        stream.Write(rx, 0, i);
-                    }
-                }
-            }
-            string outStr1;
-            if (checkBox_hexTerminal.Checked) outStr1 = ConvertByteArrToHex(rx, i);
-            else outStr1 = System.Text.Encoding.GetEncoding(ComPrnControl.Properties.Settings.Default.CodePage).GetString(rx, 0, i);
-            collectBuffer(outStr1, 11);
-        }*/
 
         private void checkBox_hexCommand_CheckedChanged(object sender, EventArgs e)
         {
@@ -146,18 +112,21 @@ namespace WindowsFormsApplication1
 
         private void button_openport_Click(object sender, EventArgs e)
         {
-            if (!IsConnected) LptOpen(comboBox_portname1.SelectedItem.ToString());
-            if (!IsConnected)
+            if (comboBox_portname1.Items.Count > 0 && comboBox_portname1.SelectedItem.ToString() != "No LPT ports found")
             {
-                MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem.ToString());
-                comboBox_portname1.Enabled = true;
-                return;
+                if (!IsConnected) LptOpen(comboBox_portname1.SelectedItem.ToString());
+                if (!IsConnected)
+                {
+                    MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem.ToString());
+                    comboBox_portname1.Enabled = true;
+                    return;
+                }
+                comboBox_portname1.Enabled = false;
+                button_closeport.Enabled = true;
+                button_openport.Enabled = false;
+                button_Send.Enabled = true;
+                button_sendFile.Enabled = true;
             }
-            comboBox_portname1.Enabled = false;
-            button_closeport.Enabled = true;
-            button_openport.Enabled = false;
-            button_Send.Enabled = true;
-            button_sendFile.Enabled = true;
         }
 
         private void button_Send_Click(object sender, EventArgs e)
@@ -194,8 +163,6 @@ namespace WindowsFormsApplication1
                         {
                             MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                         }
-                        ReadLPT();
-                        LptPort.Close();
                     }
                 }
             }
@@ -247,7 +214,6 @@ namespace WindowsFormsApplication1
             else if (SendComing == 0)
             {
                 int repeat = 1, delay = 1, strDelay = 1;
-
                 if (textBox_fileName.Text != "" && textBox_sendNum.Text != "" && Int32.TryParse(textBox_sendNum.Text, out repeat) && Int32.TryParse(textBox_delay.Text, out delay) && Int32.TryParse(textBox_strDelay.Text, out strDelay))
                 {
                     SendComing = 1;
@@ -316,8 +282,6 @@ namespace WindowsFormsApplication1
                                     {
                                         MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                                     }
-                                    //LptPort.Read();
-                                    LptPort.Close();
                                 }
                             }
                             else
@@ -357,8 +321,6 @@ namespace WindowsFormsApplication1
                                     {
                                         MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                                     }
-                                    //LptPort.Read();
-                                    LptPort.Close();
                                 }
                             }
                         }
@@ -409,8 +371,6 @@ namespace WindowsFormsApplication1
                                     {
                                         MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                                     }
-                                    //LptPort.Read();
-                                    LptPort.Close();
                                 }
                                 if (repeat > 1) outStr = "\r\nSend cycle " + (n + 1).ToString() + "/" + repeat.ToString() + "\r\n";
                                 else outStr = "";
@@ -461,8 +421,6 @@ namespace WindowsFormsApplication1
                                     {
                                         MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                                     }
-                                    //LptPort.Read();
-                                    LptPort.Close();
                                 }
                                 if (repeat > 1) outStr = " Send cycle " + (n + 1).ToString() + "/" + repeat.ToString() + ">> ";
                                 else outStr = "";
@@ -499,8 +457,6 @@ namespace WindowsFormsApplication1
                                     {
                                         MessageBox.Show("Error sending to port " + comboBox_portname1.SelectedItem.ToString() + ": " + ex.Message);
                                     }
-                                    //LptPort.Read();
-                                    LptPort.Close();
                                 }
                                 if (repeat > 1) outStr = " Send cycle " + (n + 1).ToString() + "/" + repeat.ToString() + ">> ";
                                 else outStr = ">> ";
@@ -565,18 +521,13 @@ namespace WindowsFormsApplication1
             LptPrnControl.Properties.Settings.Default.checkBox_hexParam = checkBox_hexParam.Checked;
             LptPrnControl.Properties.Settings.Default.textBox_param = textBox_param.Text;
             LptPrnControl.Properties.Settings.Default.Save();
-            port.Dispose();
-            LptPort.Dispose();
+            //port.Dispose();
+            //LptPort.Dispose();
         }
 
         private void radioButton_stream_CheckedChanged(object sender, EventArgs e)
         {
             textBox_strDelay.Enabled = !radioButton_stream.Checked;
-        }
-
-        private void textBox_terminal_DoubleClick(object sender, EventArgs e)
-        {
-            ReadLPT();
         }
 
         delegate void SetTextCallback1(string text);
