@@ -13,7 +13,7 @@
         /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
         protected override void Dispose(bool disposing)
         {
-            LptPort.Dispose();
+            _lptPort.Dispose();
             if (disposing && (components != null))
             {                
                 components.Dispose();
@@ -75,7 +75,7 @@
             this.button_closeport.TabIndex = 8;
             this.button_closeport.Text = "Close";
             this.button_closeport.UseVisualStyleBackColor = true;
-            this.button_closeport.Click += new System.EventHandler(this.button_closeport_Click);
+            this.button_closeport.Click += new System.EventHandler(this.Button_closeport_Click);
             // 
             // button_openport
             // 
@@ -86,7 +86,7 @@
             this.button_openport.TabIndex = 7;
             this.button_openport.Text = "Open";
             this.button_openport.UseVisualStyleBackColor = true;
-            this.button_openport.Click += new System.EventHandler(this.button_openport_Click);
+            this.button_openport.Click += new System.EventHandler(this.Button_openport_Click);
             // 
             // button_Clear
             // 
@@ -97,7 +97,7 @@
             this.button_Clear.TabIndex = 23;
             this.button_Clear.Text = "Clear";
             this.button_Clear.UseVisualStyleBackColor = true;
-            this.button_Clear.Click += new System.EventHandler(this.button_Clear_Click);
+            this.button_Clear.Click += new System.EventHandler(this.Button_Clear_Click);
             // 
             // textBox_param
             // 
@@ -110,8 +110,8 @@
             this.textBox_param.Name = "textBox_param";
             this.textBox_param.Size = new System.Drawing.Size(370, 20);
             this.textBox_param.TabIndex = 13;
-            this.textBox_param.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox_command_KeyUp);
-            this.textBox_param.Leave += new System.EventHandler(this.textBox_param_Leave);
+            this.textBox_param.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TextBox_command_KeyUp);
+            this.textBox_param.Leave += new System.EventHandler(this.TextBox_param_Leave);
             // 
             // checkBox_hexParam
             // 
@@ -124,7 +124,7 @@
             this.checkBox_hexParam.TabIndex = 12;
             this.checkBox_hexParam.Text = "hex parameter";
             this.checkBox_hexParam.UseVisualStyleBackColor = true;
-            this.checkBox_hexParam.CheckedChanged += new System.EventHandler(this.checkBox_hexParam_CheckedChanged);
+            this.checkBox_hexParam.CheckedChanged += new System.EventHandler(this.CheckBox_hexParam_CheckedChanged);
             // 
             // checkBox_hexTerminal
             // 
@@ -163,7 +163,7 @@
             this.checkBox_hexCommand.TabIndex = 10;
             this.checkBox_hexCommand.Text = "hex command";
             this.checkBox_hexCommand.UseVisualStyleBackColor = true;
-            this.checkBox_hexCommand.CheckedChanged += new System.EventHandler(this.checkBox_hexCommand_CheckedChanged);
+            this.checkBox_hexCommand.CheckedChanged += new System.EventHandler(this.CheckBox_hexCommand_CheckedChanged);
             // 
             // textBox_terminal
             // 
@@ -190,8 +190,8 @@
             this.textBox_command.Name = "textBox_command";
             this.textBox_command.Size = new System.Drawing.Size(370, 20);
             this.textBox_command.TabIndex = 11;
-            this.textBox_command.KeyUp += new System.Windows.Forms.KeyEventHandler(this.textBox_command_KeyUp);
-            this.textBox_command.Leave += new System.EventHandler(this.textBox_command_Leave);
+            this.textBox_command.KeyUp += new System.Windows.Forms.KeyEventHandler(this.TextBox_command_KeyUp);
+            this.textBox_command.Leave += new System.EventHandler(this.TextBox_command_Leave);
             // 
             // button_Send
             // 
@@ -202,7 +202,7 @@
             this.button_Send.TabIndex = 87;
             this.button_Send.Text = "Send";
             this.button_Send.UseVisualStyleBackColor = true;
-            this.button_Send.Click += new System.EventHandler(this.button_Send_Click);
+            this.button_Send.Click += new System.EventHandler(this.Button_Send_Click);
             // 
             // textBox_saveTo
             // 
@@ -225,7 +225,7 @@
             this.checkBox_saveTo.TabIndex = 21;
             this.checkBox_saveTo.Text = "save to:";
             this.checkBox_saveTo.UseVisualStyleBackColor = true;
-            this.checkBox_saveTo.CheckedChanged += new System.EventHandler(this.checkBox_saveTo_CheckedChanged);
+            this.checkBox_saveTo.CheckedChanged += new System.EventHandler(this.CheckBox_saveTo_CheckedChanged);
             // 
             // button_openFile
             // 
@@ -236,7 +236,7 @@
             this.button_openFile.TabIndex = 16;
             this.button_openFile.Text = "Select file";
             this.button_openFile.UseVisualStyleBackColor = true;
-            this.button_openFile.Click += new System.EventHandler(this.button_openFile_Click);
+            this.button_openFile.Click += new System.EventHandler(this.Button_openFile_Click);
             // 
             // textBox_fileName
             // 
@@ -261,7 +261,7 @@
             this.checkBox_hexFileOpen.TabIndex = 14;
             this.checkBox_hexFileOpen.Text = "hex text data";
             this.checkBox_hexFileOpen.UseVisualStyleBackColor = true;
-            this.checkBox_hexFileOpen.CheckedChanged += new System.EventHandler(this.checkBox_hexFileOpen_CheckedChanged);
+            this.checkBox_hexFileOpen.CheckedChanged += new System.EventHandler(this.CheckBox_hexFileOpen_CheckedChanged);
             // 
             // button_sendFile
             // 
@@ -273,12 +273,12 @@
             this.button_sendFile.TabIndex = 17;
             this.button_sendFile.Text = "Send file:";
             this.button_sendFile.UseVisualStyleBackColor = true;
-            this.button_sendFile.Click += new System.EventHandler(this.button_sendFile_ClickAsync);
+            this.button_sendFile.Click += new System.EventHandler(this.Button_sendFile_ClickAsync);
             // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
+            this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.OpenFileDialog1_FileOk);
             // 
             // textBox_delay
             // 
@@ -386,7 +386,7 @@
             this.radioButton_stream.TabStop = true;
             this.radioButton_stream.Text = "stream";
             this.radioButton_stream.UseVisualStyleBackColor = true;
-            this.radioButton_stream.CheckedChanged += new System.EventHandler(this.radioButton_stream_CheckedChanged);
+            this.radioButton_stream.CheckedChanged += new System.EventHandler(this.RadioButton_stream_CheckedChanged);
             // 
             // label_LptPort
             // 

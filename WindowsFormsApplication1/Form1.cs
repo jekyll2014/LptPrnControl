@@ -13,40 +13,39 @@ namespace LptPrnControl
 {
     public partial class Form1 : Form
     {
-        private int SendComing, txtOutState;
-        private long oldTicks = DateTime.Now.Ticks, limitTick = 200;
-        private int LogLinesLimit = 100;
+        private int _sendComing;
+        private int _logLinesLimit = 100;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern SafeFileHandle CreateFile(string lpFileName, FileAccess dwDesiredAccess, uint dwShareMode,
             IntPtr lpSecurityAttributes, FileMode dwCreationDisposition, uint dwFlagsAndAttributes,
             IntPtr hTemplateFile);
 
-        private bool IsConnected;
-        private SafeFileHandle port;
-        private FileStream LptPort;
+        private bool _isConnected;
+        private SafeFileHandle _port;
+        private FileStream _lptPort;
 
-        public bool LptOpen(string lptP)
+        private bool LptOpen(string lptP)
         {
             try
             {
-                port = CreateFile(lptP, FileAccess.ReadWrite, 0, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
-                if (port.IsInvalid)
+                _port = CreateFile(lptP, FileAccess.ReadWrite, 0, IntPtr.Zero, FileMode.Open, 0, IntPtr.Zero);
+                if (_port.IsInvalid)
                 {
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-                    IsConnected = false;
-                    return IsConnected;
+                    _isConnected = false;
+                    return _isConnected;
                 }
 
-                IsConnected = true;
-                LptPort = new FileStream(port, FileAccess.ReadWrite);
+                _isConnected = true;
+                _lptPort = new FileStream(_port, FileAccess.ReadWrite);
             }
             catch (Exception ex)
             {
                 var message = ex.Message;
             }
 
-            return IsConnected;
+            return _isConnected;
         }
 
         public Form1()
@@ -56,11 +55,11 @@ namespace LptPrnControl
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            port = CreateFile(textBox_saveTo.Text, FileAccess.ReadWrite, 0, IntPtr.Zero, FileMode.OpenOrCreate, 0,
+            _port = CreateFile(textBox_saveTo.Text, FileAccess.ReadWrite, 0, IntPtr.Zero, FileMode.OpenOrCreate, 0,
                 IntPtr.Zero);
-            LptPort = new FileStream(port, FileAccess.Read);
-            LptPort.Close();
-            port = null;
+            _lptPort = new FileStream(_port, FileAccess.Read);
+            _lptPort.Close();
+            _port = null;
 
             comboBox_portname1.Items.Clear();
             try
@@ -81,45 +80,43 @@ namespace LptPrnControl
             textBox_command.Text = Settings.Default.textBox_command;
             checkBox_hexParam.Checked = Settings.Default.checkBox_hexParam;
             textBox_param.Text = Settings.Default.textBox_param;
-            limitTick = Settings.Default.LineBreakTimeout;
-            limitTick *= 10000;
-            LogLinesLimit = Settings.Default.LogLinesLimit;
+            _logLinesLimit = Settings.Default.LogLinesLimit;
         }
 
-        private void checkBox_hexCommand_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_hexCommand_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_hexCommand.Checked) textBox_command.Text = Accessory.ConvertStringToHex(textBox_command.Text);
             else textBox_command.Text = Accessory.ConvertHexToString(textBox_command.Text);
         }
 
-        private void checkBox_hexParam_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_hexParam_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_hexParam.Checked) textBox_param.Text = Accessory.ConvertStringToHex(textBox_param.Text);
             else textBox_param.Text = Accessory.ConvertHexToString(textBox_param.Text);
         }
 
-        private void button_Clear_Click(object sender, EventArgs e)
+        private void Button_Clear_Click(object sender, EventArgs e)
         {
             textBox_terminal.Clear();
         }
 
-        private void textBox_command_Leave(object sender, EventArgs e)
+        private void TextBox_command_Leave(object sender, EventArgs e)
         {
             if (checkBox_hexCommand.Checked) textBox_command.Text = Accessory.CheckHexString(textBox_command.Text);
         }
 
-        private void textBox_param_Leave(object sender, EventArgs e)
+        private void TextBox_param_Leave(object sender, EventArgs e)
         {
             if (checkBox_hexParam.Checked) textBox_param.Text = Accessory.CheckHexString(textBox_param.Text);
         }
 
-        private void button_openport_Click(object sender, EventArgs e)
+        private void Button_openport_Click(object sender, EventArgs e)
         {
             if (comboBox_portname1.Items.Count > 0 &&
                 comboBox_portname1.SelectedItem.ToString() != "No LPT ports found")
             {
-                if (!IsConnected) LptOpen(comboBox_portname1.SelectedItem.ToString());
-                if (!IsConnected)
+                if (!_isConnected) LptOpen(comboBox_portname1.SelectedItem.ToString());
+                if (!_isConnected)
                 {
                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                     comboBox_portname1.Enabled = true;
@@ -134,7 +131,7 @@ namespace LptPrnControl
             }
         }
 
-        private void button_Send_Click(object sender, EventArgs e)
+        private void Button_Send_Click(object sender, EventArgs e)
         {
             byte[] buff = { };
             if (textBox_command.Text + textBox_command.Text != "")
@@ -148,7 +145,7 @@ namespace LptPrnControl
                 if (sendStrHex != "")
                 {
                     LptOpen(comboBox_portname1.SelectedItem.ToString());
-                    if (!IsConnected)
+                    if (!_isConnected)
                     {
                         MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                         comboBox_portname1.Enabled = true;
@@ -161,7 +158,7 @@ namespace LptPrnControl
                         textBox_param.AutoCompleteCustomSource.Add(textBox_param.Text);
                         try
                         {
-                            LptPort.Write(Accessory.ConvertHexToByteArray(sendStrHex), 0, sendStrHex.Length / 3);
+                            _lptPort.Write(Accessory.ConvertHexToByteArray(sendStrHex), 0, sendStrHex.Length / 3);
                         }
                         catch (Exception ex)
                         {
@@ -173,10 +170,10 @@ namespace LptPrnControl
             }
         }
 
-        private void button_closeport_Click(object sender, EventArgs e)
+        private void Button_closeport_Click(object sender, EventArgs e)
         {
-            if (IsConnected) LptPort.Close();
-            IsConnected = false;
+            if (_isConnected) _lptPort.Close();
+            _isConnected = false;
             comboBox_portname1.Enabled = true;
             button_Send.Enabled = false;
             button_sendFile.Enabled = false;
@@ -184,13 +181,13 @@ namespace LptPrnControl
             button_closeport.Enabled = false;
         }
 
-        private void checkBox_saveTo_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_saveTo_CheckedChanged(object sender, EventArgs e)
         {
             if (checkBox_saveTo.Checked) textBox_saveTo.Enabled = false;
             else textBox_saveTo.Enabled = true;
         }
 
-        private void button_openFile_Click(object sender, EventArgs e)
+        private void Button_openFile_Click(object sender, EventArgs e)
         {
             if (checkBox_hexFileOpen.Checked)
             {
@@ -210,20 +207,20 @@ namespace LptPrnControl
             }
         }
 
-        private async void button_sendFile_ClickAsync(object sender, EventArgs e)
+        private async void Button_sendFile_ClickAsync(object sender, EventArgs e)
         {
-            if (SendComing > 0)
+            if (_sendComing > 0)
             {
-                SendComing++;
+                _sendComing++;
             }
-            else if (SendComing == 0)
+            else if (_sendComing == 0)
             {
                 int repeat = 1, delay = 1, strDelay = 1;
                 if (textBox_fileName.Text != "" && textBox_sendNum.Text != "" &&
                     int.TryParse(textBox_sendNum.Text, out repeat) && int.TryParse(textBox_delay.Text, out delay) &&
                     int.TryParse(textBox_strDelay.Text, out strDelay))
                 {
-                    SendComing = 1;
+                    _sendComing = 1;
                     button_Send.Enabled = false;
                     button_closeport.Enabled = false;
                     button_openFile.Enabled = false;
@@ -261,7 +258,7 @@ namespace LptPrnControl
                                 }
 
                                 LptOpen(comboBox_portname1.SelectedItem.ToString());
-                                if (!IsConnected)
+                                if (!_isConnected)
                                 {
                                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                                     comboBox_portname1.Enabled = true;
@@ -272,7 +269,7 @@ namespace LptPrnControl
                                 {
                                     for (var m = 0; m < tmpBuffer.Length; m++)
                                     {
-                                        LptPort.Write(tmpBuffer, m, 1);
+                                        _lptPort.Write(tmpBuffer, m, 1);
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 /
                                                              (repeat * tmpBuffer.Length);
                                         if (strDelay > 0) await TaskEx.Delay(strDelay);
@@ -285,7 +282,7 @@ namespace LptPrnControl
                                                 Accessory.ConvertByteArrayToHex(tmpBuffer));
                                         outStr += "\r\n";
                                         SetText(outStr);
-                                        if (SendComing > 1) m = tmpBuffer.Length;
+                                        if (_sendComing > 1) m = tmpBuffer.Length;
                                     }
                                 }
                                 catch (Exception ex)
@@ -308,7 +305,7 @@ namespace LptPrnControl
                                 }
 
                                 LptOpen(comboBox_portname1.SelectedItem.ToString());
-                                if (!IsConnected)
+                                if (!_isConnected)
                                 {
                                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                                     comboBox_portname1.Enabled = true;
@@ -317,7 +314,7 @@ namespace LptPrnControl
 
                                 try
                                 {
-                                    LptPort.Write(tmpBuffer, 0, tmpBuffer.Length);
+                                    _lptPort.Write(tmpBuffer, 0, tmpBuffer.Length);
                                     //ReadLPT();
                                     outStr = ">> ";
                                     if (checkBox_hexTerminal.Checked)
@@ -354,7 +351,7 @@ namespace LptPrnControl
                                 }
 
                                 LptOpen(comboBox_portname1.SelectedItem.ToString());
-                                if (!IsConnected)
+                                if (!_isConnected)
                                 {
                                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                                     comboBox_portname1.Enabled = true;
@@ -366,7 +363,7 @@ namespace LptPrnControl
                                     for (var m = 0; m < tmpBuffer.Length; m++)
                                     {
                                         tmpBuffer[m] = Accessory.CheckHexString(tmpBuffer[m]);
-                                        LptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer[m]), 0,
+                                        _lptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer[m]), 0,
                                             tmpBuffer[m].Length / 3);
                                         outStr = ">> ";
                                         if (checkBox_hexTerminal.Checked) outStr += tmpBuffer[m];
@@ -374,7 +371,7 @@ namespace LptPrnControl
                                         outStr += "\r\n";
                                         if (strDelay > 0) await TaskEx.Delay(strDelay);
                                         //ReadLPT();
-                                        if (SendComing > 1) m = tmpBuffer.Length;
+                                        if (_sendComing > 1) m = tmpBuffer.Length;
                                         SetText(outStr);
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 /
                                                              (repeat * tmpBuffer.Length);
@@ -408,7 +405,7 @@ namespace LptPrnControl
                                 tmpBuffer = Accessory.CheckHexString(tmpBuffer);
 
                                 LptOpen(comboBox_portname1.SelectedItem.ToString());
-                                if (!IsConnected)
+                                if (!_isConnected)
                                 {
                                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                                     comboBox_portname1.Enabled = true;
@@ -419,7 +416,7 @@ namespace LptPrnControl
                                 {
                                     for (var m = 0; m < tmpBuffer.Length; m += 3)
                                     {
-                                        LptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer.Substring(m, 3)), 0, 1);
+                                        _lptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer.Substring(m, 3)), 0, 1);
                                         outStr = ">> ";
                                         if (checkBox_hexTerminal.Checked) outStr += tmpBuffer.Substring(m, 3);
                                         else outStr += Accessory.ConvertHexToString(tmpBuffer.Substring(m, 3));
@@ -428,7 +425,7 @@ namespace LptPrnControl
                                         //ReadLPT();
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 /
                                                              (repeat * tmpBuffer.Length);
-                                        if (SendComing > 1) m = tmpBuffer.Length;
+                                        if (_sendComing > 1) m = tmpBuffer.Length;
                                         SetText(outStr);
                                         progressBar1.Value = (n * tmpBuffer.Length + m) * 100 /
                                                              (repeat * tmpBuffer.Length);
@@ -459,7 +456,7 @@ namespace LptPrnControl
                                 }
 
                                 LptOpen(comboBox_portname1.SelectedItem.ToString());
-                                if (!IsConnected)
+                                if (!_isConnected)
                                 {
                                     MessageBox.Show("Error opening port " + comboBox_portname1.SelectedItem);
                                     comboBox_portname1.Enabled = true;
@@ -468,7 +465,7 @@ namespace LptPrnControl
 
                                 try
                                 {
-                                    LptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer), 0, tmpBuffer.Length / 3);
+                                    _lptPort.Write(Accessory.ConvertHexToByteArray(tmpBuffer), 0, tmpBuffer.Length / 3);
                                     //ReadLPT();
                                 }
                                 catch (Exception ex)
@@ -488,7 +485,7 @@ namespace LptPrnControl
                         }
 
                         if (repeat > 1) await TaskEx.Delay(delay);
-                        if (SendComing > 1) n = repeat;
+                        if (_sendComing > 1) n = repeat;
                     }
 
                     button_Send.Enabled = true;
@@ -501,16 +498,16 @@ namespace LptPrnControl
                     textBox_strDelay.Enabled = true;
                 }
 
-                SendComing = 0;
+                _sendComing = 0;
             }
         }
 
-        private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
+        private void OpenFileDialog1_FileOk(object sender, CancelEventArgs e)
         {
             textBox_fileName.Text = openFileDialog1.FileName;
         }
 
-        private void checkBox_hexFileOpen_CheckedChanged(object sender, EventArgs e)
+        private void CheckBox_hexFileOpen_CheckedChanged(object sender, EventArgs e)
         {
             if (!checkBox_hexFileOpen.Checked)
             {
@@ -525,11 +522,11 @@ namespace LptPrnControl
             }
         }
 
-        private void textBox_command_KeyUp(object sender, KeyEventArgs e)
+        private void TextBox_command_KeyUp(object sender, KeyEventArgs e)
         {
             if (button_Send.Enabled)
                 if (e.KeyData == Keys.Return)
-                    button_Send_Click(textBox_command, EventArgs.Empty);
+                    Button_Send_Click(textBox_command, EventArgs.Empty);
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -543,7 +540,7 @@ namespace LptPrnControl
             //LptPort.Dispose();
         }
 
-        private void radioButton_stream_CheckedChanged(object sender, EventArgs e)
+        private void RadioButton_stream_CheckedChanged(object sender, EventArgs e)
         {
             textBox_strDelay.Enabled = !radioButton_stream.Checked;
         }
@@ -566,10 +563,10 @@ namespace LptPrnControl
             {
                 var pos = textBox_terminal.SelectionStart;
                 textBox_terminal.AppendText(text);
-                if (textBox_terminal.Lines.Length > LogLinesLimit)
+                if (textBox_terminal.Lines.Length > _logLinesLimit)
                 {
                     var tmp = new StringBuilder();
-                    for (var i = textBox_terminal.Lines.Length - LogLinesLimit; i < textBox_terminal.Lines.Length; i++)
+                    for (var i = textBox_terminal.Lines.Length - _logLinesLimit; i < textBox_terminal.Lines.Length; i++)
                     {
                         tmp.Append(textBox_terminal.Lines[i]);
                         tmp.Append("\r\n");
@@ -587,53 +584,6 @@ namespace LptPrnControl
                 {
                     textBox_terminal.SelectionStart = pos;
                     textBox_terminal.ScrollToCaret();
-                }
-            }
-        }
-
-        public const byte Port1DataIn = 11;
-        public const byte Port1DataOut = 12;
-        public const byte Port1SignalIn = 13;
-        public const byte Port1SignalOut = 14;
-        public const byte Port1Error = 15;
-
-        private readonly object threadLock = new object();
-
-        public void collectBuffer(string tmpBuffer, int state)
-        {
-            if (tmpBuffer != "")
-            {
-                var time = DateTime.Today.ToShortDateString() + " " + DateTime.Now.ToLongTimeString() + "." +
-                           DateTime.Now.Millisecond.ToString("D3");
-                lock (threadLock)
-                {
-                    if (!(txtOutState == state && DateTime.Now.Ticks - oldTicks < limitTick && state != Port1DataOut))
-                    {
-                        if (state == Port1DataIn) tmpBuffer = "<< " + tmpBuffer; //sending data
-                        else if (state == Port1DataOut) tmpBuffer = ">> " + tmpBuffer; //receiving data
-                        else if (state == Port1SignalIn) tmpBuffer = "<< " + tmpBuffer; //pin change received
-                        else if (state == Port1SignalOut) tmpBuffer = ">> " + tmpBuffer; //pin changed by user
-                        else if (state == Port1Error) tmpBuffer = "!! " + tmpBuffer; //error occured
-
-                        if (checkBox_saveTime.Checked) tmpBuffer = time + " " + tmpBuffer;
-                        tmpBuffer = "\r\n" + tmpBuffer;
-                        txtOutState = state;
-                    }
-
-                    if (checkBox_saveInput.Checked && state == Port1DataIn ||
-                        checkBox_saveOutput.Checked && state == Port1DataOut)
-                        try
-                        {
-                            File.AppendAllText(textBox_saveTo.Text, tmpBuffer,
-                                Encoding.GetEncoding(Settings.Default.CodePage));
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("\r\nError opening file " + textBox_saveTo.Text + ": " + ex.Message);
-                        }
-
-                    SetText(tmpBuffer);
-                    oldTicks = DateTime.Now.Ticks;
                 }
             }
         }
